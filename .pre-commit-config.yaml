@@ -1,0 +1,28 @@
+repos:
+  # 기본 정리 훅 (이건 유지해도 좋음)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0 # 사용할 버전
+    hooks:
+      - id: trailing-whitespace # 공백 제거
+      - id: end-of-file-fixer # 파일 끝 줄바꿈
+      - id: check-yaml # YAML 파일 검사
+      - id: check-added-large-files
+
+  # Ruff (flake8 + isort 대체, 자동 수정 가능) - like 컨벤션(반강제성 규격)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
+    hooks:
+      - id: ruff # 파이썬 린트: PEP8 규악을 지켰는지 검사합니다.
+        args: [--fix]
+
+  # Black (코드 포맷터)
+  - repo: https://github.com/psf/black
+    rev: 24.3.0
+    hooks:
+      - id: black # 파이썬 코드 포맷터: 코드 스타일을 통일시켜 줍니다.
+        language_version: python3
+
+# 항목들은 개발자의 기호에 따라 취사선택할 수 있습니다.
+# 필요하다고 생각하는 것들만 추가하면 됩니다.
+# rev 에서 ''은 원하는 버전으로 바꿀 수 있습니다.
+# 'pre-commit autoupdate'을 명령을 실행하면 자동으로 버전이 업데이트 됩니다.
