@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="container">
+  <h2>Create a New Todo</h2>
+    <div>
+      <label for="name">Name:</label>
+      <input type="text" name="name" id="name">
+    </div>
+
+    <div>
+      <label for="description">Description:</label>
+      <textarea name="description" id="description">
+      </textarea>
+    </div>
+
+    <div>
+      <label for="complete">Complete:</label>
+      <input type="checkbox" name="complete" id="complete">
+    </div>
+
+    <div>
+      <label for="exp">Experience Points:</label>
+      <input type="number" name="exp" id="exp" min="0">
+    </div>
+
+    <button type="submit" id="todoCreate">Create</button>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    console.log("create loading")
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js">
+    // 인터넷에서 axios 라이브러리를 불러와줘
+    // axios = 자바스크립트에서 HTTP 요청을 쉽게 보내게 해주는 도구
+</script>
+
+<script>
+const api = axios.create({
+  baseURL: "/",
+  // 모든 API 요청의 기본 URL: 모든 요청의 기본 주소는 / 로 할게
+
+  headers: {
+    "Content-Type": "application/json",
+    // 서버로 보낼 데이터 형식 지정 (JSON): 데이터 형식은 항상 JSON으로 보낼게
+  }
+});
+
+// CSRF 자동 주입 (Django 필수): 모든 요청이 나가기 전에 이 코드를 먼저 실행해줘
+api.interceptors.request.use(config => { // interceptor = 중간에서 가로채는 장치
+
+  const csrfToken = document.cookie
+    .split("; ")
+    .find(row => row.startsWith("csrftoken"))
+    ?.split("=")[1];
+  // 브라우저 쿠키에서 csrftoken 값을 찾기
+    /* 쿠키 파싱 과정:
+        "sessionid=abc; csrftoken=xyz123; other=def"
+               ↓ split("; ")
+        ["sessionid=abc", "csrftoken=xyz123", "other=def"]
+                ↓ find(startsWith("csrftoken"))
+        "csrftoken=xyz123"
+                ↓ split("=")[1]
+            "xyz123"
+    */
+  if (csrfToken) {
+    config.headers["X-CSRFToken"] = csrfToken;
+    // Django가 요구하는 CSRF 토큰을 요청 헤더에 자동 추가
+    // Django는 POST 요청마다 이 토큰을 확인해요. 없으면 403 오류가 나요
+  }
+
+  return config;
+  // 수정된 요청 설정 반환
+});
+
+
+document.getElementById("todoCreate").addEventListener("click", async () => {
+  // todoCreate 버튼 클릭 시 실행
+  // async = 안에서 비동기 작업(서버 통신)을 할 거라는 선언
+
+  try { // 에러가 발생할 수 있는 코드를 실행하는 영역, 오류나면 catch로 감
+
+    const res = await api.post("todo/api/create/", {
+      // Todo 생성 API로 POST 요청 전송
+      // 비동기 작업이 끝날 때까지 기다림, 서버 응답이 올 때까지 기다린 후 다음 코드 실행
+      // await = 응답 오기 전까지 다음 줄 실행하지 마
+
+      name: document.getElementById("name").value,      // 입력한 Todo 이름
+      description: document.getElementById("description").value,      // 입력한 설명
+      complete: document.getElementById("complete").checked,      // 체크박스 상태 (true / false)
+      exp: Number(document.getElementById("exp").value || 0)      // 경험치 입력값 (숫자로 변환, 없으면 0)
+      // HTML 입력 필드에서 값을 꺼내서 JSON으로 만들어줘
+    });
+
+    console.log(res.data);
+    // 서버에서 받은 응답 데이터 출력
+
+    window.location.href = "/todo/list/";
+    // 글 저장 후 메인페이지(=todo 목록 페이지) 이동
+
+  } catch (err) { // 에러가 발생했을 때 처리하는 영역
+    console.error(err.response?.data || err.message);
+    // 에러 발생 시 콘솔에 에러 출력
+    // ?. = "response가 없을 수도 있으니 안전하게 확인해줘"
+    // 입력값이 비어있으면 0을 사용하라는 뜻으로 `||` 이건 or 논리 연산자
+  }
+});
+</script>
+
+{% endblock %}
