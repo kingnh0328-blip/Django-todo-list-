@@ -90,3 +90,51 @@ class TodoUpdateAPI(APIView):  # API 기반으로 TodoUpdateAPI 클래스 만들
         return Response(
             serializer.data
         )  # serializer에서 json으로 변환한 형식으로 응답해줘.
+
+    def patch(self, request, pk):
+        # PATCH 요청 → 부분 수정 (일부 필드만 수정 가능)
+        try:
+            todo = Todo.objects.get(pk=pk)
+            # pk에 해당하는 Todo 데이터 조회
+
+        except Todo.DoesNotExist:
+            # 해당 Todo가 존재하지 않을 경우
+            return Response(
+                {"error": "해당하는 todo가 없습니다."},
+                status=status.HTTP_404_NOT_FOUND,
+                # HTTP 상태코드 404 반환
+            )
+
+        serializer = TodoSerializer(todo, data=request.data, partial=True)
+        # partial=True → 일부 필드만 보내도 수정 가능
+        serializer.is_valid(raise_exception=True)
+        # 데이터 유효성 검사
+        todo = serializer.save()
+        # 수정된 데이터 DB 저장
+        serializer = TodoSerializer(todo)
+        # 수정된 객체를 JSON 변환
+
+        return Response(serializer.data)
+        # 수정된 데이터 응답
+
+
+# 삭제하기 API
+class TodoDeleteAPI(APIView):  # api 기반으로 TodoDeleteAPI 클래스 만들게.
+    def delete(self, request, pk):  # 사용자가 put 형식으로 요청하면 이 함수 실행시켜줘
+        try:
+            todo = Todo.objects.get(
+                pk=pk  # Todo 테이블에서 사용자가 입력한 pk와 일치하는 todo를 todo 변수에 담아줘
+            )
+        except (
+            Todo.DoesNotExist
+        ):  # todo 테이블에 없는 데이터를 불러오기 할 경우 이 함수를 실행시켜줘.
+            return Response(
+                {"error": "해당하는 todo가 없습니다."},  # 에러 메세지 띄워주고,
+                status=status.HTTP_404_NOT_FOUND,  # http 상태는 404 상태로 출력해줘
+            )
+
+        todo.delete()  # DB에서 해당 todo 객체를 삭제해줘
+
+        return Response(
+            status=status.HTTP_204_NO_CONTENT
+        )  # 삭제에 성공하면 http 상태를 204로 출력해줘

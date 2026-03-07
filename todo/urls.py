@@ -5,7 +5,13 @@ from .views.templates_views import (
     TodoDetailView,
     TodoUpdateView,
 )
-from .views.api_views import TodoListAPI, TodoCreateAPI, TodoRetrieveAPI, TodoUpdateAPI
+from .views.api_views import (
+    TodoListAPI,
+    TodoCreateAPI,
+    TodoRetrieveAPI,
+    TodoUpdateAPI,
+    TodoDeleteAPI,
+)
 
 app_name = "todo"
 
@@ -25,7 +31,8 @@ urlpatterns = [
     path("api/create/", TodoCreateAPI.as_view(), name="todo_api_create"),
     path("api/retrieve/<int:pk>/", TodoRetrieveAPI.as_view(), name="todo_api_retrieve"),
     path("api/update/<int:pk>/", TodoUpdateAPI.as_view(), name="todo_api_update"),
+    path("api/delete/<int:pk>/", TodoDeleteAPI.as_view(), name="todo_api_delete"),
     # /api/list/ 주소로 요청이 오면 (사람이든 프로그램이든) TodoListAPI를 실행해서 JSON 데이터로 응답해줘
     # /api/create/ 주소로 요청이 오면 (사람이든 프로그램이든) TodoCreateAPI를 실행해서 JSON 데이터로 응답해줘
-    # /api/retrieve/1/ 주소로 요청이 오면 (사람이든 프로그램이든) TodoRetrieveAPI를 실행해서 1번 Todo의 JSON 데이터로 응답해줘
-]
+    # /api/retrieve/pk/ 주소로 요청이 오면 (사람이든 프로그램이든) TodoRetrieveAPI를 실행해서 pk번 Todo의 JSON 데이터로 응답해줘
+]  # /api/delete/1/ 주소로 요청이 오면 (사람이든 프로그램이든) TodoDeleteAPI를 실행해서 pk번 Todo를 DB에서 삭제하고 성공하면 빈 응답(204)을 돌려줘

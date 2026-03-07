@@ -32,51 +32,6 @@
   document.addEventListener("DOMContentLoaded", function () {
     console.log("create loading")
   });
-</script>
-
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js">
-    // 인터넷에서 axios 라이브러리를 불러와줘
-    // axios = 자바스크립트에서 HTTP 요청을 쉽게 보내게 해주는 도구
-</script>
-
-<script>
-const api = axios.create({
-  baseURL: "/",
-  // 모든 API 요청의 기본 URL: 모든 요청의 기본 주소는 / 로 할게
-
-  headers: {
-    "Content-Type": "application/json",
-    // 서버로 보낼 데이터 형식 지정 (JSON): 데이터 형식은 항상 JSON으로 보낼게
-  }
-});
-
-// CSRF 자동 주입 (Django 필수): 모든 요청이 나가기 전에 이 코드를 먼저 실행해줘
-api.interceptors.request.use(config => { // interceptor = 중간에서 가로채는 장치
-
-  const csrfToken = document.cookie
-    .split("; ")
-    .find(row => row.startsWith("csrftoken"))
-    ?.split("=")[1];
-  // 브라우저 쿠키에서 csrftoken 값을 찾기
-    /* 쿠키 파싱 과정:
-        "sessionid=abc; csrftoken=xyz123; other=def"
-               ↓ split("; ")
-        ["sessionid=abc", "csrftoken=xyz123", "other=def"]
-                ↓ find(startsWith("csrftoken"))
-        "csrftoken=xyz123"
-                ↓ split("=")[1]
-            "xyz123"
-    */
-  if (csrfToken) {
-    config.headers["X-CSRFToken"] = csrfToken;
-    // Django가 요구하는 CSRF 토큰을 요청 헤더에 자동 추가
-    // Django는 POST 요청마다 이 토큰을 확인해요. 없으면 403 오류가 나요
-  }
-
-  return config;
-  // 수정된 요청 설정 반환
-});
-
 
 document.getElementById("todoCreate").addEventListener("click", async () => {
   // todoCreate 버튼 클릭 시 실행
