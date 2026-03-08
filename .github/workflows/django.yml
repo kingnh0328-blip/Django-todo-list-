@@ -1,0 +1,61 @@
+name: Django CI
+# GitHub Actions 워크플로우 이름 (Django Todo 프로젝트 CI 실행)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+# main 브랜치에 push 또는 pull request가 발생하면 실행
+
+jobs:
+  build:
+  # 실행할 작업(Job) 이름
+
+    runs-on: ubuntu-latest
+    # GitHub에서 제공하는 Ubuntu 환경에서 실행
+
+    strategy:
+      max-parallel: 4
+      # 최대 4개의 작업을 동시에 실행 가능
+
+      matrix:
+        python-version: ["3.12"]
+        # 사용할 Python 버전 지정 (requirements.txt 기준 최신 호환 버전)
+
+    steps:
+    - uses: actions/checkout@v4
+      # GitHub 저장소 코드를 워크플로우 환경으로 가져오기
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+      # 지정된 Python 버전 설치
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+      # pip 업데이트 후 requirements.txt에 있는 패키지 설치
+      # (django==4.2.29, djangorestframework==3.16.1 등 포함)
+
+    - name: Run Migrations
+      run: |
+        python manage.py migrate --noinput
+      # SQLite 기반 Django 데이터베이스 마이그레이션 실행
+      # (db.sqlite3 파일이 자동 생성됨)
+
+    - name: Debug Info
+      run: |
+        python manage.py showmigrations todo
+        python manage.py shell -c "from django.conf import settings; print('DATABASES =', settings.DATABASES)"
+      # todo 앱의 마이그레이션 상태와 DB 설정 정보 확인 (디버깅용)
+
+    - name: Run Tests
+      run: |
+        python manage.py test todo --verbosity 2
+      # todo 앱의 CRUD API 테스트 실행 (TodoAPITests: list, create, retrieve, update, delete, 404 검증)
+      env:
+        DJANGO_SETTINGS_MODULE: mysite.settings
+        # 프로젝트 설정 모듈 명시 (mysite/settings.py 사용)
