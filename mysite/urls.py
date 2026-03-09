@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
+from django.conf import settings
+from django.conf.urls.static import static
 
 # 프레임워크에서 뷰(View) 처리 후
 # 사용자를 다른 URL로 강제 이동(리다이렉션)시킬 때
@@ -16,3 +18,8 @@ urlpatterns = [
     path("todo/", include("todo.urls")),
     # request를 받으면, todo:list로 redirect해줘" 라는 이름 없는 함수를 그 자리에서 만든 것!
 ]
+
+if settings.DEBUG:  # 개발 모드일 때만 아래 코드 실행
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    #            ↑                   ↑                              ↑
+    #      기존 URL에 추가       URL 경로(/media/)               실제 파일이 있는 폴더

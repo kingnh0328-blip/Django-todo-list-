@@ -25,6 +25,11 @@
       <input type="number" name="exp" id="exp" min="0">
     </div>
 
+    <div>
+      <label for="image">Image:</label>
+      <input type="file" id="image">
+    </div>
+
     <button type="submit" id="todoCreate">Create</button>
 </div>
 
@@ -39,17 +44,27 @@ document.getElementById("todoCreate").addEventListener("click", async () => {
 
   try { // 에러가 발생할 수 있는 코드를 실행하는 영역, 오류나면 catch로 감
 
-    const res = await api.post("todo/viewsets/view/", {
+    const formData = new FormData();
+
+    // 입력된 Todo 데이터를 FormData에 추가
+    formData.append("name", document.getElementById("name").value);
+    formData.append("description", document.getElementById("description").value);
+    formData.append("complete", document.getElementById("complete").checked);
+    formData.append("exp", document.getElementById("exp").value || 0);
+
+    // 이미지 파일 input 요소 가져오기
+    const fileInput = document.getElementById("image");
+    // 파일이 선택되어 있으면 FormData에 이미지 추가
+    if (fileInput.files.length > 0) {
+      formData.append("image", fileInput.files[0]);
+    }
+
+
+    const res = await api.post("todo/viewsets/view/", formData);
       // Todo 생성 API로 POST 요청 전송
+      // JSON 대신 FormData 형태로 서버에 전송
       // 비동기 작업이 끝날 때까지 기다림, 서버 응답이 올 때까지 기다린 후 다음 코드 실행
       // await = 응답 오기 전까지 다음 줄 실행하지 마
-
-      name: document.getElementById("name").value,      // 입력한 Todo 이름
-      description: document.getElementById("description").value,      // 입력한 설명
-      complete: document.getElementById("complete").checked,      // 체크박스 상태 (true / false)
-      exp: Number(document.getElementById("exp").value || 0)      // 경험치 입력값 (숫자로 변환, 없으면 0)
-      // HTML 입력 필드에서 값을 꺼내서 JSON으로 만들어줘
-    });
 
     console.log(res.data);
     // 서버에서 받은 응답 데이터 출력
@@ -64,6 +79,7 @@ document.getElementById("todoCreate").addEventListener("click", async () => {
     // 입력값이 비어있으면 0을 사용하라는 뜻으로 `||` 이건 or 논리 연산자
   }
 });
+
 </script>
 
 {% endblock %}

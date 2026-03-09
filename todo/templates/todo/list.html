@@ -59,6 +59,7 @@ document.addEventListener("DOMContentLoaded", function () {    // HTML 문서가
                 <p><strong>설명:</strong> ${todo.description}</p>
                 <p><strong>완료 여부:</strong> ${todo.complete}</p>
                 <p><strong>exp:</strong> ${todo.exp}</p>
+                ${todo.image ? `<img src="${todo.image}" style="max-width:200px;">` : ""}
                 <hr>
             `;
 

@@ -4,6 +4,7 @@ cfgv==3.4.0
 click==8.1.8
 distlib==0.4.0
 django==4.2.29
+django-environ==0.13.0
 djangorestframework==3.16.1
 filelock==3.19.1
 identify==2.6.15
@@ -11,6 +12,7 @@ mypy-extensions==1.1.0
 nodeenv==1.10.0
 packaging==26.0
 pathspec==1.0.4
+pillow==11.3.0
 platformdirs==4.4.0
 pre-commit==4.3.0
 python-discovery==1.1.0
