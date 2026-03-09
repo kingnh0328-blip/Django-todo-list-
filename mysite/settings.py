@@ -1,15 +1,18 @@
 from pathlib import Path
 import os
+import environ  # environ = 환경변수 추가
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# 보안 향상, 코드 재사용, 환경 구분 가능
+env = environ.Env(DEBUG=(bool, False))
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
+# 환경변수
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-=z1h8^&vdqu1$vwjtitht12ai9xv%n@e5(nxj8akjzld$8othy"
+# SECURITY를 .env로 이동하여 보호
+SECRET_KEY = env("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -117,7 +120,16 @@ STATICFILES_DIRS = [
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
+    # 기본권한 설정: 누구나 API에 접근 가능(개발시 사용)
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permission.AllowAny",
+    ],
+    # 기본 페이지네이션 설정
+    "DEFAULT_PAGINATION_CLASS": "todo.pagination.CustomPageNumberPagination",
+    "PAGE_SIZE": 3,  # 한 페이지에 3개씩 출력하겠다는 의미, 아무것도 설정하지 않으면 디폴트 = 10
+    # API응답형식
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
     ],
 }

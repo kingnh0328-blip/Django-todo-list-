@@ -2,42 +2,97 @@
 {% load static %}
 {% block content %}
 
-<div class="todocontainer">
-    {% for todo in todos %}
-        <div class="todo-item" data-id="{{ todo.id }}">
-            <p><strong>이름:</strong> {{ todo.name }}</p>
-            <p><strong>설명:</strong> {{ todo.description }}</p>
-            <p><strong>완료 여부:</strong> {{ todo.complete }}</p>
-            <p><strong>작성일:</strong>
-            {{ todo.created_at|date:"Y-m-d H:i" }}</p>
+<!-- Todo 목록이 출력될 영역 -->
+<div class="todocontainer"></div>
 
-            <hr>
-        </div>
-    {% empty %}
-        <p>등록된 할 일이 없습니다.</p>
-    {% endfor %}
+<!-- 페이지네이션 영역 -->
+<div class="pagination">
+    <button id="prevBtn">이전</button>
+	<span id="pageInfo"></span>
+	<button id="nextBtn">다음</button>
 </div>
+
+<!-- Todo 생성 페이지 이동 버튼 -->
 <button class="todoCreate" id="createBtn">Todo 등록하기</button>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function () {    // HTML 문서가 모두 로드된 후 실행되는 코드
+/*
+페이지 로드
+    ↓
+loadPage(1) 실행
+    ↓
+API에서 데이터 가져오기
+    ↓
+renderTodos() → 화면에 Todo 출력
+updatePaginationUI() → 페이지 버튼 업데이트
+    ↓
+이전/다음 버튼으로 페이지 이동 반복
+*/
 
-    console.log("create loading");    // 페이지가 정상적으로 로드되었는지 확인하는 콘솔 출력
+document.addEventListener("DOMContentLoaded", function () {    // HTML 문서가 모두 로드된 후 실행되는 코드
+    console.log("create loading");   // 페이지가 정상적으로 로드되었는지 확인하는 콘솔 출력
 
-    const items = document.querySelectorAll(".todo-item"); // class가 "todo-item"인 모든 요소들을 선택
-    items.forEach(item => { // 선택된 요소들을 하나씩 반복 처리
-        item.addEventListener("click", () => { // 각 todo-item에 클릭 이벤트 추가
-            const todoId = item.dataset.id; // HTML의 data-id 속성 값을 가져옴 (todo의 pk 값)
-            window.location.href = `/todo/detail/${todoId}/`; // 해당 pk를 사용하여 상세 페이지로 이동
+    let currentPage = 1; // 현재 페이지 번호 저장
+
+    function loadPage(page) { // 특정 페이지의 Todo 목록을 서버에서 가져오는 함수
+        api.get(`/todo/viewsets/view/?page=${page}`) // axios GET 요청 -> Django ViewSet API 호출
+            .then(res => {
+                const data = res.data; // 서버에서 받은 응답 데이터를 data 변수에 담아줘(axios는 응답을 res.data 안에 담아서 줘)
+
+                renderTodos(data.data); // Todo 목록 화면에 출력
+                updatePaginationUI(data); // 페이지네이션 UI 업데이트
+                currentPage = data.current_page; // 현재 페이지 상태 업데이트
+            })
+            .catch(err => console.error("페이지 로드 실패", err));
+    }
+
+    function renderTodos(todos) { // Todo 목록을 HTML에 렌더링하는 함수
+        const container = document.querySelector(".todocontainer"); // Todo 출력 영역 선택
+        container.innerHTML = ""; // 기존 내용 초기화
+        todos.forEach(todo => { // Todo 데이터를 반복하면서 화면에 출력
+            const div = document.createElement("div"); // 새로운 <div> HTML 요소를 동적으로 생성해서 div 변수에 담아줘
+            div.className = "todo-item"; // 생성한 div 요소에 "todo-item" 클래스를 추가해줘
+            div.dataset.id = todo.id; // dataset -> HTML 요소에 데이터를 저장하는 속성
+            div.innerHTML = // Todo 정보 표시
+            `
+                <p><strong>이름:</strong> ${todo.name}</p>
+                <p><strong>설명:</strong> ${todo.description}</p>
+                <p><strong>완료 여부:</strong> ${todo.complete}</p>
+                <p><strong>exp:</strong> ${todo.exp}</p>
+                <hr>
+            `;
+
+            div.addEventListener("click", () => {
+                window.location.href = `/todo/detail/${todo.id}/`; // Todo 클릭 시 상세페이지 이동
+            });
+
+            container.appendChild(div); // 화면에 Todo 추가
         });
+    }
+
+    function updatePaginationUI(data) { // 페이지네이션 UI 업데이트
+        document.getElementById("pageInfo").innerText = // 페이지 정보 출력 기능
+            `${data.current_page} / ${data.page_count}`; // 현재 페이지 / 전체 페이지 표시
+        document.getElementById("prevBtn").disabled = !data.previous; // 이전 페이지 url이 없으면 버튼을 비활성화해줘
+        document.getElementById("nextBtn").disabled = !data.next; // 다음 페이지 url이 없으면 버튼을 비활성화해줘
+    }
+
+    document.getElementById("prevBtn").addEventListener("click", () => { // 이전 버튼 클릭 이벤트
+        if (currentPage > 1) loadPage(currentPage - 1); // 만약 현재 페이지가 1보다 크다면, 현재 페이지에서 -1 한 페이지로 이동
     });
 
-    document.getElementById("createBtn").addEventListener("click", () => {        // id가 createBtn인 버튼 클릭 이벤트
-        window.location.href = "/todo/create/";        // Todo 생성 페이지로 이동
-        console.log("createBtn click");        // 버튼 클릭 확인용 콘솔 출력
+    document.getElementById("nextBtn").addEventListener("click", () => { // 다음 페이지 버튼 클릭 이벤트
+        loadPage(currentPage + 1); // 현재 페이지에서 +1 한 페이지로 이동
     });
+
+    document.getElementById("createBtn").addEventListener("click", () => { // Todo 생성 페이지 이동
+        window.location.href = "/todo/create/"; // 이동할 url 참조
+    });
+
+    loadPage(1); // 페이지 최초 로딩 시 1페이지 데이터 요청
 
 });
+
 </script>
 
 {% endblock %}

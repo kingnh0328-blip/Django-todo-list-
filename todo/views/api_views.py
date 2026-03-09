@@ -1,6 +1,7 @@
 from rest_framework.views import APIView  # DRF에서 API용 뷰의 기본 틀을 가져와
 from rest_framework.response import Response  # API 응답을 만들어주는 도구를 가져와
 from rest_framework import viewsets  # ViewSets 사용을 위한 DRF 모듈 import
+from rest_framework.pagination import PageNumberPagination
 from ..models import Todo  # 경로변경
 from ..serializers import TodoSerializer  # 경로변경
 
@@ -25,6 +26,17 @@ class TodoListAPI(APIView):  # APIView를 기반으로 TodoListAPI 클래스를 
 class TodoViewSet(viewsets.ModelViewSet):
     queryset = Todo.objects.all().order_by("-created_at")
     serializer_class = TodoSerializer
+
+
+# ---------------------------------------------------------
+# Todo 목록 페이지네이션 설정
+# ---------------------------------------------------------
+class TodoListPagination(
+    PageNumberPagination
+):  # PageNumberPagination을 상속받아서 TodoListPagination 커스텀 클래스 만들게
+    page_size = 3  # 한 페이지에 보이는 데이터는 3개로 입력할게
+    page_size_query_param = "page_size"  # url에서 시용자가 page_size 파라미터로 페이지 크기를 조절할 수 있게 허용해줘
+    max_page_size = 50  # 한 페이지에 최대로 보여줄 수 있는 데이터 개수는 50개로 설정
 
 
 # ===============================
