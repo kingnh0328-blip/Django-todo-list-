@@ -12,7 +12,7 @@ from django.shortcuts import redirect
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("todo/", include("todo.urls")),
     path("", lambda request: redirect("todo:list")),  # 첫 페이지가 무조건 보이게 하기
+    path("todo/", include("todo.urls")),
     # request를 받으면, todo:list로 redirect해줘" 라는 이름 없는 함수를 그 자리에서 만든 것!
 ]

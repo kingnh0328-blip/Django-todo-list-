@@ -13,11 +13,13 @@ from rest_framework.routers import DefaultRouter
 router = DefaultRouter()
 router.register("view", TodoViewSet, basename="todo")
 
+app_name = "todo"
+
 urlpatterns = [
     # path("list/", views.todo_list, name="list"),
     # 첫 테스트용: 누군가 /list/ 주소로 접속하면, views.py에 있는 todo_list 함수를 실행해줘
     # 탬플릿 View
-    path("list/", TodoListView.as_view(), name="todo_list"),
+    path("list/", TodoListView.as_view(), name="list"),
     # 실제 작동용 list: 누군가 /list/ 주소로 접속하면, templates_views.py에 있는 TodoListView 클래스를 뷰로 변환해서 실행해줘
     path("create/", TodoCreateView.as_view(), name="todo_create"),
     # 실제 작동용 create: 누군가 /create/ 주소로 접속하면, templates_views.py에 있는 TodoCreateView 클래스를 뷰로 변환해서 실행해줘

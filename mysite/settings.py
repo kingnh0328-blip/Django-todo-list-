@@ -122,7 +122,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_FRAMEWORK = {
     # 기본권한 설정: 누구나 API에 접근 가능(개발시 사용)
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permission.AllowAny",
+        "rest_framework.permissions.AllowAny",
     ],
     # 기본 페이지네이션 설정
     "DEFAULT_PAGINATION_CLASS": "todo.pagination.CustomPageNumberPagination",
