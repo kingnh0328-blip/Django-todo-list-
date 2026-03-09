@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 취소를 누르면 삭제 진행하지 않음
 
     try {
-      const res = await api.delete(`/todo/api/delete/${todoId}/`, {
+      const res = await api.delete(`/todo/viewsets/view/${todoId}/`, {
         // DELETE 요청으로 Todo 삭제 API 호출
         method: "DELETE",
 
