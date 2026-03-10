@@ -34,11 +34,11 @@
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    console.log("create loading")
-  });
+document.addEventListener("DOMContentLoaded", function () {
+  console.log("create loading")
+});
 
-document.getElementById("todoCreate").addEventListener("click", async () => {
+document.getElementById("todoCreate").addEventListener("click", async (e) => {
   // todoCreate 버튼 클릭 시 실행
   // async = 안에서 비동기 작업(서버 통신)을 할 거라는 선언
 
@@ -49,34 +49,40 @@ document.getElementById("todoCreate").addEventListener("click", async () => {
     // 입력된 Todo 데이터를 FormData에 추가
     formData.append("name", document.getElementById("name").value);
     formData.append("description", document.getElementById("description").value);
-    formData.append("complete", document.getElementById("complete").checked);
+
+    // 체크박스는 true/false 문자열로 전송
+    formData.append("complete", document.getElementById("complete").checked ? "true" : "false");
+
+    // exp 값이 없으면 0으로 전송
     formData.append("exp", document.getElementById("exp").value || 0);
 
     // 이미지 파일 input 요소 가져오기
     const fileInput = document.getElementById("image");
-    // 파일이 선택되어 있으면 FormData에 이미지 추가
+
+    // 이미지가 선택된 경우에만 서버로 전송
     if (fileInput.files.length > 0) {
       formData.append("image", fileInput.files[0]);
     }
 
-
-    const res = await api.post("todo/viewsets/view/", formData);
-      // Todo 생성 API로 POST 요청 전송
+    // Todo 생성 API로 POST 요청 전송
+    const res = await api.post(CREATE_API_URL, formData);
       // JSON 대신 FormData 형태로 서버에 전송
       // 비동기 작업이 끝날 때까지 기다림, 서버 응답이 올 때까지 기다린 후 다음 코드 실행
       // await = 응답 오기 전까지 다음 줄 실행하지 마
 
-    console.log(res.data);
+    console.log("생성 성공:", res.data);
     // 서버에서 받은 응답 데이터 출력
 
     window.location.href = "/todo/list/";
     // 글 저장 후 메인페이지(=todo 목록 페이지) 이동
 
   } catch (err) { // 에러가 발생했을 때 처리하는 영역
-    console.error(err.response?.data || err.message);
+    console.error("생성 실패:", err.response?.data || err.message);
     // 에러 발생 시 콘솔에 에러 출력
     // ?. = "response가 없을 수도 있으니 안전하게 확인해줘"
     // 입력값이 비어있으면 0을 사용하라는 뜻으로 `||` 이건 or 논리 연산자
+
+    alert("생성실패: 콘솔/네트워크 확인");
   }
 });
 

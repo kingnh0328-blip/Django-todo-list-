@@ -15,8 +15,11 @@ from django.conf.urls.static import static
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", lambda request: redirect("todo:list")),  # 첫 페이지가 무조건 보이게 하기
-    path("todo/", include("todo.urls")),
     # request를 받으면, todo:list로 redirect해줘" 라는 이름 없는 함수를 그 자리에서 만든 것!
+    path("todo/", include("todo.urls")),
+    path(
+        "", include("accounts.urls")
+    ),  # accounts/urls.py 에 정의된 URL 패턴들을 루트 주소에 연결해줘 (예: /login/, /signup/ 등)
 ]
 
 if settings.DEBUG:  # 개발 모드일 때만 아래 코드 실행

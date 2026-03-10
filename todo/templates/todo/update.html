@@ -5,6 +5,7 @@
 <div class="container">
   <h2>Todo 수정</h2>
 
+  <!-- 현재 저장된 이미지 표시 -->
   <div>
     <label>Current Image:</label><br>
     {% if todo.image %}
@@ -14,56 +15,81 @@
     {% endif %}
   </div>
 
+  <!-- 새 이미지 업로드 -->
   <div>
     <label for="image">New Image:</label>
     <input type="file" id="image">
   </div>
 
+  <!-- Todo 이름 입력 -->
   <div>
     <label for="name">Name:</label>
     <input type="text" name="name" id="name" value="{{ todo.name }}">
   </div>
 
+  <!-- Todo 설명 입력 -->
   <div>
     <label for="description">Description:</label>
     <textarea name="description" id="description">{{ todo.description }}</textarea>
   </div>
 
+  <!-- 완료 여부 체크 -->
   <div>
     <label for="complete">Complete:</label>
     <input type="checkbox" name="complete" id="complete" {% if todo.complete %}checked{% endif %}>
   </div>
 
+  <!-- 경험치 입력 -->
   <div>
     <label for="exp">Experience Points:</label>
     <input type="number" name="exp" id="exp" min="0" value="{{ todo.exp }}">
   </div>
 
+  <!-- 저장 버튼 -->
   <button type="button" id="todoUpdate">저장</button>
+
+  <!-- 취소 버튼 (브라우저 이전 페이지로 이동) -->
   <button type="button" onclick="history.back()">취소</button>
+
+
 </div>
 
 <script>
-const todoId = "{{ todo.id }}";
-// Django 템플릿에서 전달된 todo의 id(pk)를 JavaScript 변수로 저장
+document.addEventListener("DOMContentLoaded", () => {
 
+  const LOGIN_PAGE_URL = "/login/"; // 로그인 페이지 url
+  const todoId = "{{ todo.id }}"; // Django 템플릿에서 전달된 todo의 id(pk)를 JavaScript 변수로 저장
 
-document.getElementById("todoUpdate").addEventListener("click", async () => {
-  // id가 todoUpdate인 버튼을 클릭하면 실행
+  // -----------------------------
+  // 저장 버튼 클릭 이벤트
+  // Todo 수정 요청
+  // -----------------------------
+  document.getElementById("todoUpdate").addEventListener("click", async () => { // id가 todoUpdate인 버튼을 클릭하면 실행
+    try {
+      const formData = new FormData(); // FormData 객체 생성 (폼 데이터를 서버로 전송하기 위한 객체)
+      formData.append("name", document.getElementById("name").value);
+      formData.append("description",document.getElementById("description").value);
+      formData.append("complete",document.getElementById("complete").checked ? "true" : "false");
+      formData.append("exp", document.getElementById("exp").value || 0);
 
-  try {
+      const fileInput = document.getElementById("image"); // 이미지 input 요소 가져오기
+      if (fileInput.files.length > 0) { // 새 이미지를 선택했을 경우에만 image 필드를 추가
+        formData.append("image", fileInput.files[0]);  // (이미지를 변경하지 않으면 서버로 보내지 않음)
+      }
 
-    const formData = new FormData();
-    // FormData 객체 생성 (폼 데이터를 서버로 전송하기 위한 객체)
-    const fileInput = document.getElementById("image");
-    // 이미지 input 요소 가져오기
-    if (fileInput.files.length > 0) { // 새 이미지를 선택했을 경우에만 image 필드를 추가
-      formData.append("image", fileInput.files[0]);  // (이미지를 변경하지 않으면 서버로 보내지 않음)
+      // -----------------------------
+      // PATCH 요청 (부분 수정)
+      // DRF ViewSet의 update() 또는 partial_update() 실행
+      // -----------------------------
+      const res = await api.patch(`/todo/viewsets/view/${todoId}/`, formData);
+      console.log("수정 성공:", res.data); // 성공 로그
+      window.location.href = `/todo/detail/${todoId}/`; // 수정 후 상세 페이지로 이동
+
+    } catch (err) {
+      console.error(err.response?.data || err.message); // 서버 오류 또는 네트워크 오류 발생 시 콘솔에 출력
+      alert("수정 실패");
     }
-  } catch (err) {
-    console.error(err.response?.data || err.message); // 서버 오류 또는 네트워크 오류 발생 시 콘솔에 출력
-    alert("수정 실패");
-  }
+  });
 });
 </script>
 

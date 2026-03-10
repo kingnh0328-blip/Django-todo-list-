@@ -13,6 +13,7 @@ class TodoSerializer(ModelSerializer):
         read_only_fields = [
             "created_at",
             "updated_at",
+            "users",
         ]  # created_at, updated_at은 읽기만 가능, API로 수정 못함(자동생성되는 시간이라 외부에서 바뀌면 안되기 때문)
 
         # fields = [
@@ -20,7 +21,7 @@ class TodoSerializer(ModelSerializer):
         #    "name",
         #    "description",
         #    "complete",
-        #   "exp",
+        #    "exp",
         #    "completed_at",
         #    "created_at",
         #    "updated_at",

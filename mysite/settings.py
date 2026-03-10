@@ -121,17 +121,18 @@ STATICFILES_DIRS = [
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
-    # 기본권한 설정: 누구나 API에 접근 가능(개발시 사용)
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.AllowAny",
+        # "rest_framework.permissions.AllowAny", 기본권한 설정: 누구나 API에 접근 가능(개발시 사용)
+        # "rest_framework.authentication.SessionAuthentication",  # 세션 인증 (Django 로그인 기반): 브라우저에서 로그인 상태라면 자동 인증됨
+        # "rest_framework.authentication.BasicAuthentication",  # Basic 인증 (아이디/비밀번호 헤더로 보내는 방식): 주로 테스트용으로 사용됨 (Postman, curl 등)
+        "rest_framework.permissions.IsAuthenticated",  # 로그인한 사용자만 API 사용 가능
     ],
-    # 기본 페이지네이션 설정
-    "DEFAULT_PAGINATION_CLASS": "todo.pagination.CustomPageNumberPagination",
-    "PAGE_SIZE": 3,  # 한 페이지에 3개씩 출력하겠다는 의미, 아무것도 설정하지 않으면 디폴트 = 10
-    # API응답형식
+    "DEFAULT_PAGINATION_CLASS": "todo.pagination.CustomPageNumberPagination",  # 기본 페이지네이션 클래스 설정: API 목록 조회 시 페이지 단위로 데이터를 반환
+    "PAGE_SIZE": 3,  # 기본 페이지 크기: 한 페이지에 3개씩 출력하겠다는 의미, 아무것도 설정하지 않으면 디폴트 = 10
+    # 응답 데이터 출력 형식(Renderer)
     "DEFAULT_RENDERER_CLASSES": [
-        "rest_framework.renderers.JSONRenderer",
-        "rest_framework.renderers.BrowsableAPIRenderer",
+        "rest_framework.renderers.JSONRenderer",  # JSON 형식 응답(프론트앤드 / API 사용 시 기본)
+        # "rest_framework.renderers.BrowsableAPIRenderer",  # DRF 브라우저 API 화면 제공 (개발/테스트용)
     ],
 }
 

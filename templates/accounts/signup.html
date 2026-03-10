@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<h2>회원가입</h2>
+
+<input id="username" placeholder="username">
+<input id="password" placeholder="password" type="password">
+<input id="password2" placeholder="password 확인" type="password">
+
+<button id="signupBtn">가입</button>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  // 회원가입 버튼 클릭 이벤트
+  document.getElementById("signupBtn").addEventListener("click", async () => {
+    try {
+
+      // 입력창에서 사용자 입력값 가져오기
+      const username  = document.getElementById("username").value;
+      const password  = document.getElementById("password").value;
+      const password2 = document.getElementById("password2").value;
+
+      // 회원가입 API 요청
+      // 입력한 데이터를 JSON 형태로 서버에 전달
+      await api.post("/api/signup/", { username, password, password2 });
+
+      // 회원가입 성공 시 알림 표시
+      alert("회원가입 완료 → 로그인으로 이동");
+
+      // 로그인 페이지로 이동
+      window.location.href = "/login/";
+
+    } catch (err) {
+
+      // 오류 발생 시 콘솔에 출력
+      console.log(err.response?.data || err.message);
+
+      // 사용자에게 실패 메시지 표시
+      alert("회원가입 실패");
+    }
+  });
+
+});
+</script>
