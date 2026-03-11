@@ -1,19 +1,38 @@
 {% extends "base.html" %}
+{% extends "auth_base.html" %}
 {% load static %}
+
 {% block content %}
+<!-- 회원가입 화면 카드 영역 -->
+<section class="auth-card">
+  <h2>회원가입</h2>
 
-<h2>회원가입</h2>
+  <!-- 사용자 이름 입력 -->
+  <input id="username" placeholder="username">
 
-<input id="username" placeholder="username">
-<input id="password" placeholder="password" type="password">
-<input id="password2" placeholder="password 확인" type="password">
+  <!-- 비밀번호 입력 -->
+  <input id="password" placeholder="password" type="password">
 
-<button id="signupBtn">가입</button>
+  <!-- 비밀번호 확인 입력 -->
+  <input id="password2" placeholder="password 확인" type="password">
 
+  <!-- 회원가입 버튼 -->
+  <button id="signupBtn">가입</button>
+
+  <!-- 이미 계정이 있는 경우 로그인 페이지 이동 -->
+  <p style="margin-top:12px;">
+    이미 계정이 있나요? <a href="/login/">로그인</a>
+  </p>
+</section>
+{% endblock %}
+
+{% block scripts %}
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
+  // ------------------------------------
   // 회원가입 버튼 클릭 이벤트
+  // ------------------------------------
   document.getElementById("signupBtn").addEventListener("click", async () => {
     try {
 

@@ -1,6 +1,8 @@
 from pathlib import Path
+from datetime import timedelta
 import os
 import environ  # environ = 환경변수 추가
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -121,7 +123,11 @@ STATICFILES_DIRS = [
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": [
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",  # 1) JWT 우선
+        "rest_framework.authentication.SessionAuthentication",  # 2) 전환기 안전장치(선택): 기존 세션도 허용, 모든 프론트가 JWT로 바뀐 후 제거 가능
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [  # 실무 기본: 기본은 잠그고, 인증/회원가입 뷰만 AllowAny로 예외 처리
         # "rest_framework.permissions.AllowAny", 기본권한 설정: 누구나 API에 접근 가능(개발시 사용)
         # "rest_framework.authentication.SessionAuthentication",  # 세션 인증 (Django 로그인 기반): 브라우저에서 로그인 상태라면 자동 인증됨
         # "rest_framework.authentication.BasicAuthentication",  # Basic 인증 (아이디/비밀번호 헤더로 보내는 방식): 주로 테스트용으로 사용됨 (Postman, curl 등)
@@ -132,9 +138,20 @@ REST_FRAMEWORK = {
     # 응답 데이터 출력 형식(Renderer)
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",  # JSON 형식 응답(프론트앤드 / API 사용 시 기본)
-        # "rest_framework.renderers.BrowsableAPIRenderer",  # DRF 브라우저 API 화면 제공 (개발/테스트용)
+        "rest_framework.renderers.BrowsableAPIRenderer",  # DRF 브라우저 API 화면 제공 (개발/테스트용)
     ],
 }
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+SIMPLE_JWT = {
+    # access는 짧게(보안), refresh는 길게(편의)
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=300),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=365),
+    # Authorization: Bearer <token>
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    # (5~6단계에서 다룰 것들 - 지금은 False로 두고 시작 권장)
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": False,
+}
