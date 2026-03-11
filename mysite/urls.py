@@ -20,6 +20,7 @@ urlpatterns = [
     path(
         "", include("accounts.urls")
     ),  # accounts/urls.py 에 정의된 URL 패턴들을 루트 주소에 연결해줘 (예: /login/, /signup/ 등)
+    path("interaction/", include("interaction.urls")),
 ]
 
 if settings.DEBUG:  # 개발 모드일 때만 아래 코드 실행
