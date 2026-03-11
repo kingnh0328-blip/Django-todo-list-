@@ -1,7 +1,5 @@
 from django.contrib.auth import authenticate, login, logout
 
-# authenticate: 아이디/비밀번호 확인 후 User 객체 반환 (실패 시 None)
-# login: 인증된 User를 세션에 저장해 로그인 상태 유지
 # logout: 세션에서 사용자 정보 삭제해 로그아웃 처리
 from rest_framework.views import (
     APIView,
@@ -16,9 +14,9 @@ from rest_framework.permissions import (
     AllowAny,
     IsAuthenticated,
 )  # AllowAny(비로그인 사용자도 접근 허용), IsAuthenticated(로그인한 사용자만 접근 가능)
-from .serializers import (
-    SignupSerializer,
-)  # 같은 앱의 serializers.py에서 SignupSerializer 클래스 가져오기
+from .serializers import SignupSerializer
+
+# 같은 앱의 serializers.py에서 SignupSerializer 클래스 가져오기
 
 
 # -----------------------------
@@ -87,11 +85,17 @@ class SessionLoginAPIView(
 class SessionLogoutAPIView(
     APIView
 ):  # APIView를 기반으로 SessionLogoutAPIView 클래스 생성할게
+    """
+    ⚠️ 전환기 임시 로그아웃(세션 정리용)
+    - JWT 환경에서 '로그아웃'은 보통 프론트에서 토큰 삭제로 처리합니다.
+    - 그래도 혹시 남아있을 수 있는 세션을 logout(request)로 정리해줍니다.
+    """
+
     permission_classes = [IsAuthenticated]  # 로그인한 사용자만 접근할 수 있어
 
     def post(self, request):  # post 요청이 들어오면 이 함수 실행할게
         logout(request)  # 현재 사용자의 세션 데이터를 삭제해서 로그아웃 처리해줘
         return Response(  # 사용자에게 처리결과를 돌려보낼게(응답객체)
-            {"detail": "로그아웃"},  # 로그아웃 메세지 반환해줘
+            {"detail": "로그아웃(세션 정리)"},  # 로그아웃 메세지 반환해줘
             status=status.HTTP_200_OK,  # 응답 상태코드를 200(성공)으로 설정할게
         )

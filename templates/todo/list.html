@@ -13,28 +13,64 @@
 </div>
 
 <!-- Todo 생성 페이지 이동 버튼 -->
-<button class="todoCreate" id="createBtn">Todo 등록하기</button>
+<button id="createBtn">Todo 등록하기</button>
 
 <script>
-
-document.addEventListener("DOMContentLoaded", function () {    // HTML 문서가 모두 로드된 후 실행되는 코드
+document.addEventListener("DOMContentLoaded", () => {    // HTML 문서가 모두 로드된 후 실행되는 코드
     console.log("create loading");   // 페이지가 정상적으로 로드되었는지 확인하는 콘솔 출력
 
     const LOGIN_PAGE_URL = "/login/"; // 로그인 페이지 URL (세션이 없을 때 이동)
     let currentPage = 1; // 현재 페이지 번호 저장
 
-    // -----------------------------
-    // 특정 페이지의 Todo 목록을 서버에서 가져오는 함수
-    // -----------------------------
+    // ✅ [수정됨] 이제 세션 기반 api가 아니라, 공통 axios 인스턴스(window.api) 사용
+    // ✅ 3단계: 공통 axios 인스턴스(window.api) 사용
+    if (!window.api) { // ✅ [추가됨] window.api 존재 확인
+        console.error("window.api가 없습니다. base.html에서 static/js/api.js가 로드됐는지 확인하세요.");
+        alert("설정 오류: api.js가 로드되지 않았습니다.");
+        return;
+    }
+
+    // ✅ [추가됨] JWT access 토큰이 없으면 바로 로그인 이동(선택 로직)
+    // (토큰이 있는데 만료된 경우는 401에서 처리)
+    const access = localStorage.getItem("access_token");
+    if (!access) {
+        console.log("access_token 없음 → 로그인 이동");
+        window.location.href = LOGIN_PAGE_URL;
+        return;
+    }
+
+    // ✅ [추가됨] 401/403 처리 로직을 함수로 분리 (기존 interceptor 대체)
+    // ✅ 응답에서 401/403이면 로그인으로 (3단계용: refresh 자동화는 5단계에서)
+    function handleAuthError(err) {
+        const status = err.response?.status;
+        if (status === 401 || status === 403) {
+            console.log("인증 실패(401/403) → 토큰 삭제 후 로그인 이동");
+
+            // ✅ [추가됨] 토큰 정리(선택)
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("refresh_token");
+
+            window.location.href = LOGIN_PAGE_URL;
+        }
+        return Promise.reject(err);
+    }
+
     function loadPage(page) {
-        api.get(`/todo/viewsets/view/?page=${page}`) // axios GET 요청 -> Django ViewSet API 호출
+        window.api.get(`/todo/viewsets/view/?page=${page}`)
             .then(res => {
-                const data = res.data; // 서버에서 받은 응답 데이터를 data 변수에 담아줘(axios는 응답을 res.data 안에 담아서 줘)
-                renderTodos(data.data); // Todo 목록 화면에 출력
-                updatePaginationUI(data); // 페이지네이션 UI 업데이트
-                currentPage = data.current_page; // 현재 페이지 상태 업데이트
+                const data = res.data;
+
+                renderTodos(data.data || data.results || []);
+                updatePaginationUI(data);
+
+                currentPage = data.current_page || page;
             })
-            .catch(err => console.error("페이지 로드 실패", err));
+            .catch(err => {
+                // ✅ [수정됨] 기존: console.error("페이지 로드 실패", err) 단순 처리
+                // ✅ 변경: 인증 오류면 handleAuthError로 로그인 이동 처리
+                handleAuthError(err).catch(() => {}); // ✅ [추가됨] 인증 실패 처리
+                console.error("페이지 로드 실패", err.response?.data || err.message); // ✅ [수정됨] 로그 더 자세히
+            });
     }
 
     // -----------------------------

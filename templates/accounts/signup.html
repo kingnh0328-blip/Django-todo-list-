@@ -1,6 +1,5 @@
-{% extends "base.html" %}
 {% extends "auth_base.html" %}
-{% load static %}
+{% block title %}회원가입{% endblock %}
 
 {% block content %}
 <!-- 회원가입 화면 카드 영역 -->
@@ -30,6 +29,14 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
+  // [추가됨] 공통 axios 인스턴스(window.api) 존재 여부 체크
+  // (auth_base.html에서 static/js/api.js를 로드해야 함)
+  if (!window.api) {
+    console.error("window.api가 없습니다. auth_base.html에서 static/js/api.js가 로드됐는지 확인하세요.");
+    alert("설정 오류: api.js가 로드되지 않았습니다.");
+    return; // ✅ [추가됨] api 없으면 중단
+  }
+
   // ------------------------------------
   // 회원가입 버튼 클릭 이벤트
   // ------------------------------------
@@ -37,13 +44,25 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
 
       // 입력창에서 사용자 입력값 가져오기
-      const username  = document.getElementById("username").value;
+      const username  = document.getElementById("username").value.trim();
       const password  = document.getElementById("password").value;
       const password2 = document.getElementById("password2").value;
 
-      // 회원가입 API 요청
-      // 입력한 데이터를 JSON 형태로 서버에 전달
-      await api.post("/api/signup/", { username, password, password2 });
+      // [추가됨] 빈 값 체크
+      if (!username || !password || !password2) {
+        alert("모든 값을 입력해주세요.");
+        return;
+      }
+
+      // [추가됨] 비밀번호 일치 체크
+      if (password !== password2) {
+        alert("비밀번호가 일치하지 않습니다.");
+        return;
+      }
+
+      // [변경] endpoint + 인스턴스: window.api + "/signup/"
+      // 회원가입 API는 토큰 없이도 가능(AllowAny) (설명 주석 추가됨)
+      await window.api.post("/signup-page/", { username, password, password2 });
 
       // 회원가입 성공 시 알림 표시
       alert("회원가입 완료 → 로그인으로 이동");
@@ -56,10 +75,15 @@ document.addEventListener("DOMContentLoaded", () => {
       // 오류 발생 시 콘솔에 출력
       console.log(err.response?.data || err.message);
 
-      // 사용자에게 실패 메시지 표시
-      alert("회원가입 실패");
+      // [추가됨] 서버 에러 메시지를 더 친절하게 뽑아서 alert
+      const msg =
+        err.response?.data?.detail ||
+        err.response?.data?.username?.[0] ||
+        err.response?.data?.password?.[0] ||
+        "회원가입 실패";
+      alert(msg);
     }
   });
-
 });
 </script>
+{% endblock %}
