@@ -16,12 +16,15 @@ class Todo(models.Model):
     image = models.ImageField(
         upload_to="todo_images/", blank=True, null=True
     )  # 이미지 파일
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,  # User가 삭제되면 해당 User의 todo들도 함께 삭제해줘
         related_name="todos",
         null=True,
     )  # user.todos.all() 로 해당 User(부모)의 todo 목록(자식)을 조회할 수 있어
+
+    is_public = models.BooleanField(default=True)  # 공개 여부
 
     def __str__(self):
         return self.name

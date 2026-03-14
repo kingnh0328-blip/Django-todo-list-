@@ -7,6 +7,7 @@ from rest_framework.permissions import (
 )  # 인증된 사용자만 접근 가능하도록 하는 권한 클래스
 from ..models import Todo  # 경로변경
 from ..serializers import TodoSerializer  # 경로변경
+from django.db.models import Q
 
 
 # 전체보기
@@ -44,10 +45,13 @@ class TodoViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]  # 로그인한 사용자만 API 접근 가능하게 해줘
     pagination_class = TodoListPagination  # 페이지네이션 설정 적용 해줘
 
-    def get_queryset(self):  # 이 사용자에게 보여줄 Todo 목록을 DB에서 가져올게
-        return Todo.objects.filter(user=self.request.user).order_by(
-            "-created_at"
-        )  # DB에서 현재 로그인한 사용자의 todo만 필터링해서 최신순으로 가져올게
+    def get_queryset(self):  # 사용자에게 보여줄 Todo 목록을 DB에서 가져올게
+        user = self.request.user  # 사용자가 작성한 글을 검증해줘
+        return Todo.objects.filter(  # todo 목록을 필터링해서 보여줄게
+            Q(is_public=True | Q(user=user)).oreder_by(
+                "-created_at"
+            )  # 공개상태이거나 사용자가 작성한 글을 생성한 순서대로 출력해줘
+        )
 
     def perform_create(
         self, serializer

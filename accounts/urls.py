@@ -1,6 +1,6 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import SignupAPIView, SessionLogoutAPIView
+from .views import SignupAPIView, SessionLogoutAPIView, MeAPIView
 from .views_page import LoginPageView, SignupPageView
 
 urlpatterns = [
@@ -18,4 +18,6 @@ urlpatterns = [
     # signup-page/ 주소로 요청이 오면 탬플릿뷰 함수에 있는 SignupPageView 클래스 실행해서 HTML 화면으로 응답해줘
     path("login/", LoginPageView.as_view(), name="page-login"),
     # login/ 주소로 요청이 오면 탬플릿뷰 함수에 있는 LoginPageView 클래스 실행해서 HTML 화면으로 응답해줘
+    path("me/", MeAPIView.as_view()),
+    # me/ 주소로 요청이 오면 MeAPIView 클래스를 실행해서 JSON 데이터로 응답해줘
 ]

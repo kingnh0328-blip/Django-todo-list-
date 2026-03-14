@@ -99,3 +99,16 @@ class SessionLogoutAPIView(
             {"detail": "로그아웃(세션 정리)"},  # 로그아웃 메세지 반환해줘
             status=status.HTTP_200_OK,  # 응답 상태코드를 200(성공)으로 설정할게
         )
+
+
+class MeAPIView(APIView):  # APIView를 기반으로 MeAPIView 클래스를 생성할게
+    permission_classes = [IsAuthenticated]  # 로그인한 사용자만 접근할 수 있어
+
+    def get(self, request):  # get 요청이 들어오면 이 함수 실행시켜줘
+        return Response(
+            {  # 응답객체에 다음 데이터를 JSON 형식으로 딕셔너리 형태로 담아줘
+                "id": request.user.id,  # 사용자의 고유 id
+                "username": request.user.username,  # 사용자의 username
+                "email": request.user.email,  # 사용자의 email
+            }
+        )

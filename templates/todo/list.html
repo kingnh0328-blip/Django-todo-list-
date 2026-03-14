@@ -162,6 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <p><strong>완료 여부:</strong> ${(todo.complete ? "완료" : "미완료")}</p>
                 <p><strong>exp:</strong> ${todo.exp ?? 0}</p>
                 ${imageSrc ? `<img src="${imageSrc}" style="max-width:200px;">` : ""}
+                <p><strong>작성자:</strong> ${todo.username ?? ""}</p>
 
                 <!-- 액션 버튼 영역 -->
                 <div class="todo-actions" style="display:flex; gap:10px; align-items:center; margin-top:10px;">
@@ -219,9 +220,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // 컨테이너에 카드 추가
             container.appendChild(div);
-        });
-    }
 
+            loadComments(todo.id, div);
+
+            async function loadComments(todoId, card) {
+              const listEl = card.querySelector(".comment-list");
+              if (!listEl) return;
+
+              const res = await window.api.get(InteractionAPI.commentList(todoId));
+              const comments = res.data || [];
+
+              listEl.innerHTML = "";
+              comments.forEach(c => {
+                  const item = document.createElement("div");
+                  item.className = "comment-item";
+                  item.style.padding = "6px 0";
+                  item.innerHTML = `<div style="font-size:14px;">
+                  <strong>${c.username ?? ""}</strong> : ${c.content ?? ""}
+                  </div>`;
+                  listEl.appendChild(item);
+              });
+            }
+    });
+  }
     /* =========================================================
       8) 페이지네이션 UI 업데이트
       - 서버 응답 형태가 커스텀일 수도, DRF 기본일 수도 있어서 둘 다 대응
