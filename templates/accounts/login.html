@@ -4,22 +4,28 @@
 
 {% block content %}
 <!-- 로그인 화면 카드 영역 -->
-<section class="auth-card"> // section auth-card 구역 설정
-  <h2>로그인</h2> // 제목 2 로그인 화면에 띄우기
+<section class="auth-card">
+  <!-- // section auth-card 구역 설정 -->
+  <h2>로그인</h2>
+  <!-- // 제목 2 로그인 화면에 띄우기 -->
 
   <!-- 사용자 이름 입력 -->
-  <input id="username" placeholder="username"> // username으로 사용자에게 input 받아주고 username으로 홀더해줘
+  <input id="username" placeholder="username">
+  <!-- // username으로 사용자에게 input 받아주고 username으로 홀더해줘 -->
 
   <!-- 비밀번호 입력 -->
-  <input id="password" placeholder="password" type="password"> // 사용자에게 password 입력받고 password으로 홀더해서 타입은 password로 저장해줘
+  <input id="password" placeholder="password" type="password">
+  <!-- // 사용자에게 password 입력받고 password으로 홀더해서 타입은 password로 저장해줘 -->
 
   <!-- 로그인 버튼 -->
-  <button id="loginBtn">로그인</button> // loginBtn 버튼
+  <button id="loginBtn">로그인</button>
+  <!-- // loginBtn 버튼 -->
 
   <!-- 회원가입 페이지 이동 링크 -->
   <p style="margin-top:12px;">
     아직 계정이 없나요? <a href="/signup-page/">회원가입</a>
   </p>
+
 </section>
 {% endblock %}
 
