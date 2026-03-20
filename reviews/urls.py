@@ -8,6 +8,7 @@ from .views import (
 router = (
     DefaultRouter()
 )  # DefaultRouter 클래스로 router 객체를 생성해서 router 변수에 담아줘 (이제 이 router에 ViewSet을 등록하면 URL이 자동으로 만들어져)
+
 router.register(
     r"collected-reviews", CollectedReviewViewSet, basename="collected-reviews"
 )

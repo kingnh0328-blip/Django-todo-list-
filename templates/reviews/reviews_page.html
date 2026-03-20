@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="reviews-wrap">
+  <!-- 왼쪽: 리뷰 목록 -->
+  <section class="card">
+    <div class="btn-row" style="justify-content:space-between;">
+      <h2 class="title">🎬 영화 리뷰</h2>
+      <button id="backToTodo">← Todo로</button>
+    </div>
+    <p class="muted">리뷰글을 선택하면 영화분석이 시작됩니다.</p>
+
+    <div id="reviewsList"></div>
+
+    <div class="pagination">
+      <button id="prevBtn">이전</button>
+      <span id="pageInfo" class="muted"></span>
+      <button id="nextBtn">다음</button>
+    </div>
+  </section>
+
+  <!-- 오른쪽: 분석 패널 -->
+  <section class="card">
+    <h2 class="title">🧠 감정 분석</h2>
+    <p class="muted">선택한 리뷰 또는 직접 입력한 텍스트를 분석합니다.</p>
+
+    <div class="hr"></div>
+
+    <div class="kv">
+      <div class="muted">글번호 <strong id="selectedId">없음</strong></div>
+      <div class="muted">제목 <strong id="selectedTitle">리뷰를 선택하세요</strong></div>
+    </div>
+
+    <div style="margin-top:10px;">
+      <textarea id="inputText" placeholder="여기에 텍스트를 붙여넣고 [텍스트 분석]을 눌러도 돼요."></textarea>
+    </div>
+
+    <div class="btn-row" style="margin-top:10px;">
+      <button id="analyzeSelected" class="primary" disabled>선택 리뷰 분석</button>
+      <button id="analyzeText">텍스트 분석</button>
+      <button id="clearBtn">초기화</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <div id="resultArea" class="muted">결과가 여기에 표시됩니다.</div>
+  </section>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // ✅ api.js 로드 확인
+  if (!window.api) {
+    alert("설정 오류: api.js가 로드되지 않았습니다.");
+    return;
+  }
+
+  // ✅ 이동 버튼
+  document.getElementById("backToTodo").onclick = () => location.href = "/todo/list/";
+
+  // ✅ 상태
+  let currentPage = 1;
+  let selected = { id: null, title: "", review: "" };
+
+  // ✅ 엔드포인트 (네가 만든 router 기준)
+  const LIST_URL = (page) => `/api/reviews/collected-reviews/?page=${page}`;
+  const SENTIMENT_BY_ID = (id) => `/api/reviews/collected-reviews/${id}/sentiment/`;
+  const SENTIMENT_TEXT = `/api/reviews/collected-reviews/sentiment/`;
+
+  const $list = document.getElementById("reviewsList");
+  const $pageInfo = document.getElementById("pageInfo");
+  const $prev = document.getElementById("prevBtn");
+  const $next = document.getElementById("nextBtn");
+
+  const $selectedId = document.getElementById("selectedId");
+  const $selectedTitle = document.getElementById("selectedTitle");
+  const $inputText = document.getElementById("inputText");
+  const $analyzeSelected = document.getElementById("analyzeSelected");
+  const $result = document.getElementById("resultArea");
+
+  function renderResult(payload) {
+    const s = payload?.sentiment ?? payload; // id 기반이면 {sentiment:{...}} 형태
+    if (!s) {
+      $result.textContent = "결과 없음";
+      return;
+    }
+
+    const label = s.label || s.label_raw || "unknown";
+    const score = (typeof s.score === "number") ? s.score.toFixed(4) : "-";
+
+    const isPos = (s.label === "positive" || s.label_raw === "LABEL_1");
+    const badgeClass = isPos ? "pos" : "neg";
+    const badgeText = isPos ? "긍정" : "부정";
+
+    $result.innerHTML = `
+      <div class="badge ${badgeClass}">
+        <strong>${badgeText}</strong>
+        <span class="muted">score: ${score}</span>
+      </div>
+      <div style="margin-top:10px;" class="muted">
+        <div>model: <code>${s.model ?? "-"}</code></div>
+        <div>label_raw: <code>${s.label_raw ?? "-"}</code></div>
+      </div>
+    `;
+  }
+
+  function selectReview(itemEl, data) {
+    // active 표시
+    [...document.querySelectorAll(".review-item")].forEach(el => el.classList.remove("active"));
+    itemEl.classList.add("active");
+
+    selected = { id: data.id, title: data.title, review: data.review };
+
+    $selectedId.textContent = String(selected.id);
+    $selectedTitle.textContent = selected.title || "(제목 없음)";
+    $inputText.value = selected.review || "";
+    $analyzeSelected.disabled = false;
+    $result.textContent = "선택 리뷰를 분석할 준비가 됐어요.";
+  }
+
+  function renderList(items) {
+    $list.innerHTML = "";
+    if (!items || items.length === 0) {
+      $list.innerHTML = "<p class='muted'>리뷰가 없습니다.</p>";
+      return;
+    }
+
+    items.forEach(r => {
+      const el = document.createElement("div");
+      el.className = "review-item";
+      const snippet = (r.review || "").slice(0, 120);
+      el.innerHTML = `
+        <div style="display:flex; justify-content:space-between; gap:10px;">
+          <strong>${r.title ?? "(제목 없음)"}</strong>
+          <span class="muted"> 글번호 ${r.id}</span>
+        </div>
+        <div class="review-snippet">${snippet}${(r.review || "").length > 120 ? "..." : ""}</div>
+      `;
+      el.addEventListener("click", () => selectReview(el, r));
+      $list.appendChild(el);
+    });
+  }
+
+  function updatePagination(data) {
+    const current = data.current_page ?? currentPage ?? 1;
+    const total = data.page_count ?? "?";
+    $pageInfo.textContent = `${current} / ${total}`;
+    $prev.disabled = !data.previous;
+    $next.disabled = !data.next;
+  }
+
+  async function loadPage(page) {
+    try {
+      const res = await window.api.get(LIST_URL(page));
+      const data = res.data;
+
+      renderList(data.data || data.results || []);
+      updatePagination(data);
+
+      currentPage = data.current_page || page;
+    } catch (err) {
+      console.error("리뷰 목록 로드 실패", err.response?.data || err.message);
+      alert("리뷰 목록 로드 실패");
+    }
+  }
+
+  // ✅ 버튼들
+  $prev.onclick = () => { if (currentPage > 1) loadPage(currentPage - 1); };
+  $next.onclick = () => loadPage(currentPage + 1);
+
+  document.getElementById("analyzeSelected").onclick = async () => {
+    if (!selected.id) return;
+    try {
+      $result.textContent = "분석 중...";
+      const res = await window.api.get(SENTIMENT_BY_ID(selected.id));
+      renderResult(res.data);
+    } catch (err) {
+      console.error("선택 리뷰 분석 실패", err.response?.data || err.message);
+      alert("선택 리뷰 분석 실패");
+    }
+  };
+
+  document.getElementById("analyzeText").onclick = async () => {
+    const text = $inputText.value.trim();
+    if (!text) return alert("텍스트를 입력하세요.");
+    try {
+      $result.textContent = "분석 중...";
+      const res = await window.api.post(SENTIMENT_TEXT, { text });
+      renderResult(res.data);
+    } catch (err) {
+      console.error("텍스트 분석 실패", err.response?.data || err.message);
+      alert("텍스트 분석 실패");
+    }
+  };
+
+  document.getElementById("clearBtn").onclick = () => {
+    selected = { id: null, title: "", review: "" };
+    $selectedId.textContent = "없음";
+    $selectedTitle.textContent = "리뷰를 선택하세요";
+    $inputText.value = "";
+    $analyzeSelected.disabled = true;
+    $result.textContent = "결과가 여기에 표시됩니다.";
+    [...document.querySelectorAll(".review-item")].forEach(el => el.classList.remove("active"));
+  };
+
+  // 첫 로드
+  loadPage(1);
+});
+</script>
+
+{% endblock %}
