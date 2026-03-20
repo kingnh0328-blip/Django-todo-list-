@@ -1,8 +1,6 @@
 # reviews/services.py
 import os
 from transformers import pipeline
-from rest_framework import serializers
-from .models import CollectedReview
 
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
@@ -45,17 +43,3 @@ def predict_sentiment(text: str) -> dict:
         "label": normalize_label(label_raw),
         "score": score,
     }
-
-
-class CollectedReviewSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CollectedReview
-        fields = ["id", "title", "review", "doc_id", "collected_at"]
-
-
-class SentimentTextSerializer(serializers.Serializer):
-    """
-    POST로 텍스트를 직접 보내서 감정분석할 때 입력 검증용
-    """
-
-    text = serializers.CharField(allow_blank=False, max_length=5000)

@@ -18,5 +18,3 @@ router.register(
 # → /api/collected-reviews/ 와 /api/collected-reviews/{id}/ URL이 자동으로 생성돼
 
 urlpatterns = router.urls
-# router가 자동으로 생성한 URL 패턴 목록을 urlpatterns 변수에 담아줘
-# (Django가 이 urlpatterns를 읽어서 실제 API URL로 등록해)

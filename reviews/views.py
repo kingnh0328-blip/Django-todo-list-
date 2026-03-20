@@ -3,10 +3,6 @@ from rest_framework import (
     status,
 )  # Django rest_framework 에서 viewsets 기능 가져올게 (URL과 DB 데이터를 연결해서 API 응답을 자동으로 만들어주는 기능이야)
 
-from rest_framework.permissions import (
-    IsAuthenticatedOrReadOnly,
-    AllowAny,
-)  # Django rest_framework.permission 기능에서 로그인한 사옹자만 접근할 수 있는 기능 가져올게 (비로그인 사용자도 읽기(GET)는 가능하고, 쓰기(POST/DELETE 등)는 로그인해야 가능한 권한 설정이야)
 
 from rest_framework.decorators import (
     action,
@@ -25,11 +21,15 @@ from .serializers import (
     SentimentTextSerializer,
 )  # serializer 파일에서 CollectedReviewSerializer, SentimentTextSerializer 클래스 가져올게
 
-from .services import (
-    predict_sentiment,
-)  # services 파일에서 presict_sentiment 클래스 가져올게
 
+from celery.result import AsyncResult
+
+from .tasks import analyze_review_sentiment_by_id, analyze_sentiment_text
 from django.shortcuts import render
+
+
+def reviews_page(request):
+    return render(request, "reviews/reviews_page.html", {})
 
 
 class CollectedReviewViewSet(
@@ -40,53 +40,60 @@ class CollectedReviewViewSet(
         "-id"
     )  # CollectedReview 테이블의 전체 데이터를 id 내림차순(최신순)으로 정렬해서 queryset 변수에 담아줘
     serializer_class = CollectedReviewSerializer  # API 응답 시 DB 데이터를 JSON으로 변환할 때 사용할 Serializer를 CollectedReviewSerializer로 지정할게
-    permission_classes = [
-        IsAuthenticatedOrReadOnly
-    ]  # 비로그인 사용자는 읽기(GET)만 가능하고, 쓰기(POST/DELETE 등)는 로그인해야 가능하도록 권한 설정할게
 
-    @action(detail=True, methods=["get"], url_path="sentiment")
-    def sentiment(self, request, pk=None):
-        """
-        GET /reviews/{id}/sentiment/
-        DB에 저장된 review 텍스트로 감정분석
-        """
-        obj = self.get_object()
-        if not obj.review:
-            return Response(
-                {"detail": "review text is empty"}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        pred = predict_sentiment(obj.review)
+    # ---------------------------------------------------------
+    # ✅ (A) DB 리뷰 비동기 분석 시작: job_id 즉시 반환
+    # POST /api/reviews/collected-reviews/{id}/sentiment-async/
+    # ---------------------------------------------------------
+    @action(detail=True, methods=["post"], url_path="sentiment-async")
+    def sentiment_async(self, request, pk=None):
+        review_id = int(pk)
+        task = analyze_review_sentiment_by_id.delay(review_id)
 
         return Response(
-            {
-                "id": obj.id,
-                "title": obj.title,
-                "sentiment": pred,
-            },
-            status=status.HTTP_200_OK,
+            {"task_id": task.id, "status": "queued"}, status=status.HTTP_202_ACCEPTED
         )
 
-    @action(
-        detail=False,
-        methods=["post"],
-        url_path="sentiment",
-        permission_classes=[AllowAny],
-    )
-    def sentiment_text(self, request):
-        """
-        POST /reviews/sentiment/
-        body: {"text": "..."}
-        텍스트 직접 보내 감정분석
-        """
+    # ---------------------------------------------------------
+    # ✅ (B) 텍스트 비동기 분석 시작
+    # POST /api/reviews/collected-reviews/sentiment-async/
+    # body: {"text": "..."}
+    # ---------------------------------------------------------
+    @action(detail=False, methods=["post"], url_path="sentiment-async")
+    def sentiment_text_async(self, request):
         serializer = SentimentTextSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         text = serializer.validated_data["text"]
-        pred = predict_sentiment(text)
+        task = analyze_sentiment_text.delay(text)
 
-        return Response(pred, status=status.HTTP_200_OK)
+        return Response(
+            {"task_id": task.id, "status": "queued"}, status=status.HTTP_202_ACCEPTED
+        )
 
+    # ---------------------------------------------------------
+    # ✅ (C) 결과 조회
+    # GET /api/reviews/collected-reviews/sentiment-result/{task_id}/
+    # ---------------------------------------------------------
+    @action(
+        detail=False, methods=["get"], url_path=r"sentiment-result/(?P<task_id>[^/.]+)"
+    )
+    def sentiment_result(self, request, task_id=None):
+        res = AsyncResult(task_id)
 
-def reviews_page(request):
-    return render(request, "reviews/reviews_page.html")
+        payload = {"task_id": task_id, "state": res.state}
+
+        if res.state == "PENDING":
+            return Response(payload, status=status.HTTP_200_OK)
+
+        if res.state == "FAILURE":
+            payload["error"] = str(res.result)
+            return Response(payload, status=status.HTTP_200_OK)
+
+        # SUCCESS
+        if res.state == "SUCCESS":
+            payload["result"] = res.result
+            return Response(payload, status=status.HTTP_200_OK)
+
+        # STARTED / RETRY 등
+        return Response(payload, status=status.HTTP_200_OK)

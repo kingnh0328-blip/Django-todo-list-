@@ -19,13 +19,25 @@ window.api = axios.create({
   timeout: 15000,
 });
 
-// ✅ 모든 요청에 Authorization 자동 부착
-window.api.interceptors.request.use((config) => {
-  const token = getAccessToken();
+// CSRF 토큰 쿠키에서 읽기
+function getCsrfToken() {
+  const value = `; ${document.cookie}`;
+  const parts = value.split("; csrftoken=");
+  if (parts.length === 2) return parts.pop().split(";").shift();
+}
 
+// ✅ 모든 요청에 Authorization + CSRF 자동 부착
+window.api.interceptors.request.use((config) => {
+  config.headers = config.headers || {};
+
+  const token = getAccessToken();
   if (token) {
-    config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  const csrfToken = getCsrfToken();
+  if (csrfToken) {
+    config.headers["X-CSRFToken"] = csrfToken;
   }
 
   return config;

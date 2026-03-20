@@ -18,3 +18,11 @@ class CollectedReviewSerializer(
             "doc_id",
             "collected_at",
         ]  # API 응답 JSON에 포함할 필드를 id, title, review, doc_id, collected_at으로 지정할게 (여기 없는 필드는 API 응답에서 제외돼)
+
+
+class SentimentTextSerializer(serializers.Serializer):
+    """
+    POST로 텍스트를 직접 보내서 감정분석할 때 입력 검증용
+    """
+
+    text = serializers.CharField(allow_blank=False, max_length=5000)
