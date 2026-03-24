@@ -48,10 +48,10 @@ class TodoViewSet(viewsets.ModelViewSet):
     def get_queryset(self):  # 사용자에게 보여줄 Todo 목록을 DB에서 가져올게
         user = self.request.user  # 사용자가 작성한 글을 검증해줘
         return Todo.objects.filter(  # todo 목록을 필터링해서 보여줄게
-            Q(is_public=True | Q(user=user)).oreder_by(
-                "-created_at"
-            )  # 공개상태이거나 사용자가 작성한 글을 생성한 순서대로 출력해줘
-        )
+            Q(is_public=True) | Q(user=user)
+        ).order_by(
+            "-created_at"
+        )  # 공개상태이거나 사용자가 작성한 글을 생성한 순서대로 출력해줘
 
     def perform_create(
         self, serializer
